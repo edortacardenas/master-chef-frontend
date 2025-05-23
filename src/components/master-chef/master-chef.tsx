@@ -131,9 +131,10 @@ const MasterChef = () => {
     };
 
     return (
-        <div className="container mx-auto p-4 max-w-2xl">
-            <Card className="shadow-xl">
-                <CardHeader className="bg-slate-100 p-6 rounded-t-lg border-b border-slate-200"> {/* Corrected typo */}
+        <div className="min-h-screen w-full bg-gradient-to-br from-slate-900 via-red-900 to-amber-800 p-4 sm:p-8 flex justify-center items-center">
+            <div className="w-full max-w-2xl">
+                <Card className="shadow-xl bg-white/80 dark:bg-slate-900/80"> {/* Cambiado bg-transparent a bg-white/80 y añadido soporte para modo oscuro */}
+                <CardHeader className="shadow-xl bg-transparent p-6 rounded-t-lg border-b border-slate-200"> {/* Corrected typo */}
                     <div className="flex items-center space-x-3 relative">
                         <ChefHat size={32} className="text-green-600" />
                         <CardTitle className="text-3xl font-bold text-slate-800">Asistente Culinario IA</CardTitle>
@@ -154,7 +155,7 @@ const MasterChef = () => {
                                 type="text"
                                 value={currentIngredient}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCurrentIngredient(e.target.value)}
-                                onKeyPress={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && handleAddIngredient()}
+                                onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && handleAddIngredient()}
                                 placeholder={USER_MESSAGES.INGREDIENT_INPUT_PLACEHOLDER}
                                 className="flex-grow"
                                 aria-label="Nuevo ingrediente"
@@ -186,7 +187,7 @@ const MasterChef = () => {
                                 {ingredientsList.map((ingredient) => ( 
                                     <li
                                         key={ingredient} // Cambiado de index a ingredient para una key más estable
-                                        className="flex items-center justify-between p-3 bg-gray-100 rounded-md shadow-sm hover:bg-gray-200 transition-colors"
+                                        className="flex items-center justify-between p-3 bg-transparent rounded-md shadow-sm hover:bg-red-200 transition-colors"
                                     >
                                         <span className="text-gray-700">{ingredient}</span>
                                         <Button
@@ -203,7 +204,7 @@ const MasterChef = () => {
                             </ul>
                         </div>
                     ): (
-                        <div className="text-center text-gray-500 italic p-4 border rounded-md bg-gray-50">
+                        <div className="bg-transparent text-center text-gray-500 italic p-4 rounded-md">
                             <p>Aún no has agregado ingredientes. ¡Empieza a crear tu lista!</p>
                         </div>
                     )}
@@ -363,10 +364,10 @@ const MasterChef = () => {
                                     <li
                                         key={recipe.id}
                                         // Added border, slightly adjusted padding/bg
-                                        className="p-3 bg-gray-50 rounded-md border border-gray-200 shadow-sm hover:bg-gray-100 transition-colors flex justify-between items-center"
+                                        className="p-3 bg-red-200 rounded-md border border-gray-200 shadow-sm hover:bg-red-100 transition-colors flex justify-between items-center"
                                     >
                                         <span className="text-gray-800 font-medium">{recipe.title}</span>
-                                        <Button variant="outline" size="sm" onClick={() => handleSelectSearchedRecipe(recipe)}>
+                                        <Button variant="ghost" size="sm" onClick={() => handleSelectSearchedRecipe(recipe)}>
                                             <BookOpen className="mr-2 h-4 w-4" /> {USER_MESSAGES.VIEW_RECIPE_DETAILS_BUTTON}
                                         </Button>
                                     </li>
@@ -396,7 +397,8 @@ const MasterChef = () => {
                         </Card>
                     )}
                 </CardContent>
-            </Card>
+                </Card>
+            </div>
         </div>
     );
 };
