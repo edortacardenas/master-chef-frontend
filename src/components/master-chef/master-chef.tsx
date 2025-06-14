@@ -16,6 +16,41 @@ import remarkGfm from 'remark-gfm'; // Importación necesaria para remarkPlugins
 // Importar helpers y tipos desde el nuevo archivo
 import { generateRecipe, saveRecipe, searchRecipes, SearchedRecipe, USER_MESSAGES } from "@/lib/helpers.ts";
 
+// Interfaz para la receta parseada
+interface ParsedRecipeData {
+    title: string;
+    ingredients: string[];
+    instructions: string;
+}
+
+// Función para parsear el markdown de la receta
+const parseRecipeMarkdownToSave = (markdown: string): ParsedRecipeData | { error: string } => {
+    const titleRegex = /## Title\s*\n([\s\S]*?)(?=\n## Ingredients|$)/;
+    const ingredientsRegex = /## Ingredients\s*\n([\s\S]*?)(?=\n## Instructions|$)/;
+    const instructionsRegex = /## Instructions\s*\n([\s\S]*)/;
+
+    const titleMatch = markdown.match(titleRegex);
+    const title = titleMatch ? titleMatch[1].trim() : '';
+    if (!title) return { error: USER_MESSAGES.PARSING_ERROR_TITLE_MISSING || "Título no encontrado." };
+    if (title.length < 3 || title.length > 50) {
+        return { error: (USER_MESSAGES.PARSING_ERROR_TITLE_LENGTH && USER_MESSAGES.PARSING_ERROR_TITLE_LENGTH(title.length)) || `El título debe tener entre 3 y 50 caracteres. Actual: ${title.length}.` };
+    }
+
+    const ingredientsMatch = markdown.match(ingredientsRegex);
+    const ingredientsText = ingredientsMatch ? ingredientsMatch[1].trim() : '';
+    if (!ingredientsText) return { error: USER_MESSAGES.PARSING_ERROR_INGREDIENTS_MISSING || "Sección de ingredientes no encontrada." };
+    const ingredients = ingredientsText.split('\n')
+        .map(line => line.replace(/^- /, '').trim())
+        .filter(ingredient => ingredient.length > 0);
+    if (ingredients.length === 0) return { error: USER_MESSAGES.PARSING_ERROR_NO_INGREDIENTS_LISTED || "No se listaron ingredientes." };
+
+    const instructionsMatch = markdown.match(instructionsRegex);
+    const instructions = instructionsMatch ? instructionsMatch[1].trim() : '';
+    if (!instructions) return { error: USER_MESSAGES.PARSING_ERROR_INSTRUCTIONS_MISSING || "Sección de instrucciones no encontrada." };
+
+    return { title, ingredients, instructions };
+};
+
 const MasterChef = () => {
     const [currentIngredient, setCurrentIngredient] = useState('');
     const [ingredientsList, setIngredientsList] = useState<string[]>([]);
@@ -96,17 +131,30 @@ const MasterChef = () => {
         setSaveRecipeError(null);
         setRecipeSuccessfullySaved(false);
 
-        const result = await saveRecipe(recipeMarkdown);
-
-        if (result.error) {
-            setSaveRecipeError(result.error);
-        } else if (result.success) {
-            setRecipeSuccessfullySaved(true);
+        if (!recipeMarkdown) {
+            setSaveRecipeError(USER_MESSAGES.SAVE_RECIPE_NO_CONTENT_ERROR || "No hay contenido de receta para guardar.");
+            setIsSavingRecipe(false);
+            return;
         }
 
+        const parsedRecipeResult = parseRecipeMarkdownToSave(recipeMarkdown);
+
+        if ('error' in parsedRecipeResult) {
+            setSaveRecipeError(parsedRecipeResult.error);
+            setIsSavingRecipe(false);
+            return;
+        }
+
+        // Se asume que saveRecipe en helpers.ts ahora espera un objeto ParsedRecipeData
+        const saveResult = await saveRecipe(parsedRecipeResult);
+
+        if (saveResult.error) {
+            setSaveRecipeError(saveResult.error);
+        } else if (saveResult.success) {
+            setRecipeSuccessfullySaved(true);
+        }
         setIsSavingRecipe(false);
     };
-
     // Refactored to use the helper function
     const handleSearchRecipes = async () => {
         setIsSearchingRecipes(true);
@@ -134,10 +182,10 @@ const MasterChef = () => {
         <div className="min-h-screen w-full bg-gradient-to-br from-slate-900 via-red-900 to-amber-800 p-4 sm:p-8 flex justify-center items-center">
             <div className="w-full max-w-2xl">
                 <Card className="shadow-xl bg-white/80 dark:bg-slate-900/80"> {/* Cambiado bg-transparent a bg-white/80 y añadido soporte para modo oscuro */}
-                <CardHeader className="shadow-xl bg-transparent p-6 rounded-t-lg border-b border-slate-200"> {/* Corrected typo */}
-                    <div className="flex items-center space-x-3 relative">
-                        <ChefHat size={32} className="text-green-600" />
-                        <CardTitle className="text-3xl font-bold text-slate-800">Asistente Culinario IA</CardTitle>
+                <CardHeader className="shadow-xl bg-transparent p-6 rounded-t-lg border-b border-slate-200 text-center sm:text-left"> {/* Centrado en móvil, izquierda en sm+ */}
+                    <div className="flex flex-col items-center sm:flex-row sm:items-center sm:space-x-3 relative">
+                        <ChefHat size={32} className="text-green-600 mb-2 sm:mb-0" />
+                        <CardTitle className="text-2xl sm:text-3xl font-bold text-slate-800">Asistente Culinario IA</CardTitle>
                     </div>
                     <CardDescription className="text-slate-600 pt-1">
                         Ingresa tus ingredientes y descubre una nueva receta.
@@ -311,8 +359,8 @@ const MasterChef = () => {
                 <CardContent className="p-6 space-y-6">
                     {/* Título de la sección de búsqueda */}
                     <div className="flex items-center space-x-3">
-                        <Search size={28} className="text-blue-600" />
-                        <h2 className="text-2xl font-bold text-slate-700">{USER_MESSAGES.SEARCH_RECIPES_TITLE}</h2>
+                        <Search size={24} className="text-blue-600" />
+                        <h2 className="text-2xl sm:text-3xl font-bold text-slate-800">{USER_MESSAGES.SEARCH_RECIPES_TITLE}</h2>
                     </div>
                     {/* Contenido de la búsqueda: input, botón, resultados, etc. */}
                     <div className="flex space-x-2">

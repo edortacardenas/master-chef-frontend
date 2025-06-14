@@ -26,21 +26,32 @@ export const USER_MESSAGES = {
     SAVING_RECIPE_BUTTON: "Guardando...",
     RECIPE_SAVED_BUTTON: "¡Receta Guardada!",
     NO_RECIPE_TO_SAVE_ERROR: "No hay receta para guardar.",
-    INCOMPLETE_RECIPE_PARSE_ERROR: "No se pudo extraer la información completa de la receta (título, ingredientes o instrucciones). Por favor, verifica el formato.",
     SAVING_RECIPE_ERROR_TITLE: "Error al Guardar",
     SAVE_RECIPE_SUCCESS_TITLE: "Éxito",
     SAVE_RECIPE_SUCCESS_DESCRIPTION: "La receta ha sido guardada correctamente en tu recetario.",
     ERROR_SAVING_RECIPE_DETAILS: (status: number, message?: string) => message || `Error ${status} al guardar la receta.`,
+    RECIPE_DEFAULT_TITLE_ERROR: "No se pudo extraer un título válido para la receta. Asegúrate de que el formato del markdown sea correcto o que el título no esté vacío.",
+    RECIPE_TITLE_LENGTH_ERROR: "El título de la receta debe tener entre 3 y 50 caracteres.",
+    RECIPE_NO_INGREDIENTS_ERROR: "La receta debe incluir al menos un ingrediente.",
+    RECIPE_NO_INSTRUCTIONS_ERROR: "La receta debe incluir instrucciones.",
 
     // Búsqueda de recetas
-    SEARCH_RECIPES_TITLE: "Buscar Recetas por Título",
+    SEARCH_RECIPES_TITLE: "Buscar Recetas",
     SEARCH_INPUT_PLACEHOLDER: "Escribe palabras del título (ej: apple pie, chicken soup)",
-    SEARCH_BUTTON: "Buscar Recetas",
+    SEARCH_BUTTON: "Buscar",
     SEARCHING_BUTTON: "Buscando...",
     NO_RECIPES_FOUND_SEARCH: "No se encontraron recetas con las palabras clave especificadas en el título.",
     SEARCH_ERROR_TITLE: "Error en la Búsqueda",
     VIEW_RECIPE_DETAILS_BUTTON: "Ver Detalles",
     CLOSE_RECIPE_DETAILS_BUTTON: "Cerrar Detalles",
+    
+    // Errores de Procesamiento/Parseo de Receta (usados antes de llamar a saveRecipe)
+    PARSING_ERROR_TITLE_MISSING: "Error al procesar la receta: Título no encontrado.",
+    PARSING_ERROR_TITLE_LENGTH: (longitud: number) => `El título debe tener entre 3 y 90 caracteres. Longitud actual: ${longitud}.`,
+    PARSING_ERROR_INGREDIENTS_MISSING: "Error al procesar la receta: Sección de ingredientes no encontrada o vacía.",
+    PARSING_ERROR_NO_INGREDIENTS_LISTED: "Error al procesar la receta: No se listaron ingredientes válidos.",
+    PARSING_ERROR_INSTRUCTIONS_MISSING: "Error al procesar la receta: Sección de instrucciones no encontrada o vacía.",
+    SAVE_RECIPE_NO_CONTENT_ERROR: "No hay contenido de receta para guardar.",
 
     // Generales
     DEFAULT_RECIPE_TITLE: "Receta sin Título",
@@ -61,6 +72,13 @@ interface ApiErrorResponse {
     message?: string;
     errors?: ApiErrorDetail[];
     error?: string;
+}
+
+// Interface for the structured recipe data expected by the saveRecipe function
+export interface RecipeInputData {
+    title: string;
+    ingredients: string[];
+    instructions: string;
 }
 // Interface for searched recipes
 interface SearchedRecipe {
@@ -188,19 +206,26 @@ export const generateRecipe = async (ingredientsList: string[]): Promise<{ recip
 };
 
 // --- Helper to save recipe ---
-// Accepts recipe markdown, returns success status or error
-export const saveRecipe = async (recipeMarkdown: string): Promise<{ success: boolean; error?: string }> => {
-    if (!recipeMarkdown) {
-        return { success: false, error: USER_MESSAGES.NO_RECIPE_TO_SAVE_ERROR };
+// Accepts structured recipe data, returns success status or error
+export const saveRecipe = async (recipeData: RecipeInputData): Promise<{ success: boolean; error?: string }> => {
+    const { title, ingredients, instructions } = recipeData;
+
+    // Validaciones específicas basadas en el modelo del backend
+    // Estas validaciones se aplican a los datos ya parseados.
+    if (title === USER_MESSAGES.DEFAULT_RECIPE_TITLE || title.length === 0) {
+        // El título no debe ser el por defecto o estar vacío.
+        return { success: false, error: USER_MESSAGES.RECIPE_DEFAULT_TITLE_ERROR };
     }
-
-    const { title, ingredients, instructions } = parseRecipeMarkdown(recipeMarkdown);
-
-    // Basic validation for parsed content
-    if (!title || title === USER_MESSAGES.DEFAULT_RECIPE_TITLE || ingredients.length === 0 || !instructions) {
-        return { success: false, error: USER_MESSAGES.INCOMPLETE_RECIPE_PARSE_ERROR };
+    if (title.length < 3 || title.length > 90) {
+        return { success: false, error: USER_MESSAGES.RECIPE_TITLE_LENGTH_ERROR };
     }
-
+    if (ingredients.length === 0) {
+        return { success: false, error: USER_MESSAGES.RECIPE_NO_INGREDIENTS_ERROR };
+    }
+    if (instructions.length === 0) {
+        return { success: false, error: USER_MESSAGES.RECIPE_NO_INSTRUCTIONS_ERROR };
+    }
+    
     try {
         // Assuming the save endpoint doesn't return a significant body on success
         await makeApiRequest<unknown>('/api/recipes', 'POST', { title, ingredients, instructions });
