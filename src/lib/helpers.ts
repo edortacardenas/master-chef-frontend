@@ -166,7 +166,7 @@ export const generateRecipe = async (ingredientsList: string[]): Promise<{ recip
     const ingredientsString = ingredientsList.join(', ');
 
     try {
-        const data = await makeApiRequest<ApiRecipeResponse>('api/hf-chat-completion', 'POST', { ingredientsString });
+        const data = await makeApiRequest<ApiRecipeResponse>('/api/hf-chat-completion', 'POST', { ingredientsString });
         if (data.recipe) {
             return { recipeMarkdown: data.recipe };
         } else {
