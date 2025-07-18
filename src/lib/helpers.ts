@@ -91,6 +91,7 @@ interface SearchedRecipe {
 }
 
 const BASE_URL = import.meta.env.VITE_BACKEND_URL;
+console.log('La direccion del backend es '+ import.meta.env.VITE_BACKEND_URL)
 
 // --- Custom Error Class for API ---
 export class ApiError extends Error {
@@ -165,7 +166,7 @@ export const generateRecipe = async (ingredientsList: string[]): Promise<{ recip
     const ingredientsString = ingredientsList.join(', ');
 
     try {
-        const data = await makeApiRequest<ApiRecipeResponse>('/api/hf-chat-completion', 'POST', { ingredientsString });
+        const data = await makeApiRequest<ApiRecipeResponse>('api/hf-chat-completion', 'POST', { ingredientsString });
         if (data.recipe) {
             return { recipeMarkdown: data.recipe };
         } else {
