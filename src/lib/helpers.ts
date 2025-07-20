@@ -112,7 +112,7 @@ async function makeApiRequest<TResponse, TBody = Record<string, any>>(endpoint: 
         body: body ? JSON.stringify(body) : undefined,
     });
 
-    const responseData = await response.json();
+    const responseData = await response.json().catch(() => ({ message: "Empty or invalid JSON response" }));
 
     if (!response.ok) {
         throw new ApiError(response.status, responseData as ApiErrorResponse, responseData.message || responseData.error);
@@ -278,6 +278,7 @@ export const searchRecipes = async (searchTitleInput: string): Promise<{ recipes
         }
     }
 };
+
 
 // Export interfaces if they are needed elsewhere
 export type { ApiRecipeResponse, ApiErrorDetail, ApiErrorResponse, SearchedRecipe };

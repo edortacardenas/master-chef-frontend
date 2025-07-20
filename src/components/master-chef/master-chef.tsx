@@ -14,7 +14,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm'; // Importación necesaria para remarkPlugins
 
 // Importar helpers y tipos desde el nuevo archivo
-import { generateRecipe, saveRecipe, searchRecipes, SearchedRecipe, USER_MESSAGES } from "@/lib/helpers.ts";
+import { generateRecipe, saveRecipe, searchRecipes, SearchedRecipe, USER_MESSAGES} from "@/lib/helpers.ts";
 
 // Interfaz para la receta parseada
 interface ParsedRecipeData {
@@ -109,7 +109,7 @@ const MasterChef = () => {
     // Refactored to use the helper function
     const handleGenerateRecipe = async () => {
         setIsLoading(true);
-        setApiError(null);
+        setApiError(null); 
         setRecipeMarkdown('');
         setRecipeSuccessfullySaved(false); // Reset save status when generating new recipe
         setSaveRecipeError(null);
@@ -288,7 +288,8 @@ const MasterChef = () => {
                             </Alert>
                         )}
                     </div>
-
+                    
+                    
                     {/* Visualización de la Receta */}
                     {isLoading && !recipeMarkdown && (
                          <div className="flex justify-center items-center p-8">
