@@ -105,6 +105,7 @@ export class ApiError extends Error {
 
 // --- Helper for API Calls ---
 async function makeApiRequest<TResponse, TBody = Record<string, any>>(endpoint: string, method: 'POST' | 'GET', body?: TBody): Promise<TResponse> {
+    console.log(`${BASE_URL}${endpoint}`)
     const response = await fetch(`${BASE_URL}${endpoint}`, {
         method,
         headers: { 'Content-Type': 'application/json' },
